@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from numba import njit
+
 sns.set()
+
 
 #@njit
 def make_VF(fx, fy, interval, num_vec=50, norm_fac=.75):  # use plt.quiver directly with X, Y, U, V

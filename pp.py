@@ -4,6 +4,7 @@ from ODE_TOOLS import make_VF
 from numba import njit
 import astyle
 import matplotlib.animation as animation
+from matplotlib.collections import LineCollection
 astyle.make_pretty()
 @njit
 def pp01(interval, targs, dh=1e-3):
@@ -82,14 +83,16 @@ def stability_analysis(x, y, K=44, r=.12, b=.12, h=.99, d=.315, a=.66, sigma=.53
               f" -- Eigen Values: ({l1:.3f}, {l2:.3f})\n"
               f" -- Type: {typo}")
 
+def plot_nc(targs):
+    K, r, b, h, a, d, sigma = targs[:-2]
+    q = d / (b * (sigma - d * h))
+
+    x = np.linspace(0, K)
+    y = (r/b) * (x-a) * (1 - x/K)
+    plt.plot(x, y, c="white")
+    plt.axvline(q, 0,100, c="white")
+
 def plot_pp01(rand=False):
-    # K = 300.0
-    # r = 1.0
-    # b = .01
-    # h = .05
-    # a = .04
-    # d = .05
-    # sigma = .02
     X0 = 95.0#q
     Y0 = 20.0 #eq4y
 
@@ -117,16 +120,16 @@ def plot_pp01(rand=False):
                 break
 
     else:
-        K = 100.0
-        r = 1.0
-        b = .3
-        h = .6
-        a = 50.0
-        d = 3.0
-        sigma = 2.0
+        K = 38.0
+        r = 0.8360346534665105
+        b = 0.06042445758166415
+        h = 0.5034374369716825
+        a = 0.17891038414771132
+        d = 0.23463094578034538
+        sigma = 0.8708806437827094
         q = d / (b * (sigma - d * h))
 
-    targs = [K, r, b, h, a, h, sigma, X0, Y0]
+    targs = [K, r, b, h, a, d, sigma, X0, Y0]
 
     eq1 = (0, 0)
     eq2 = (a, 0)
@@ -151,8 +154,9 @@ def plot_pp01(rand=False):
 
     num=10
 
-    xran = np.linspace(0, K+50, num)
+    xran = np.linspace(0, K+50, num+20)
     yran = np.linspace(0, K+50, num)
+
     for k in range(len(xran)):
         targs[-2] = xran[k]
         for j in range(len(yran)):
@@ -160,13 +164,21 @@ def plot_pp01(rand=False):
             t, X, Y = pp01(interval, targs)
             plt.scatter(xran[k], yran[j], c="red", s=1)
             plt.plot(X, Y)
-    # #
-    # VX, VY, U, V = make_VF(lambda x, y: (r * x * (x - a) * (1 - (x/K))) - (b * x * y),
-    #                        lambda x, y: ((sigma * b * x * y)/(1 + (b * h * x))) - (d * y),
-    #                        30, num_vec=50)
-    #
-    # plt.quiver(VX, VY, U, V, headwidth=1, headlength=4, color="white")
 
+    num_intr = 10
+    poix = np.linspace(q-0.02, q+0.02, num_intr)
+    poiy = np.linspace(eq4y-.1, eq4y+.1, num_intr)
+
+    for k in range(len(poix)):
+        targs[-2] = poix[k]
+        for j in range(len(poiy)):
+            targs[-1] = poiy[j]
+            t, X, Y = pp01(interval, targs)
+            plt.scatter(poix[k], poiy[j], c="red", s=1)
+            plt.plot(X, Y)
+
+
+    plot_nc(targs)
 
 
     ax[0].plot(t, X, c="#FF00FF")
