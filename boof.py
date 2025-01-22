@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pp import make_params
+from pp import make_params, plot_nc
 from numba import njit
 
 
@@ -10,7 +10,6 @@ def make_VF_good(n):
 
 x, y = make_VF_good(400)
 K, r, b, h, a, d, sigma = make_params(1)
-
 u = (r * x * (x - a) * (1 - (x/K))) - (b * x * y)
 v = ((sigma * b * x * y)/(1 + (b * h * x))) - (d * y)
 
@@ -21,7 +20,8 @@ plt.xlim(0, 100)
 plt.ylim(0, 100)
 plt.xlabel('x')
 plt.ylabel('y')
-plt.title('2D Streamline of Vector Field')
+plt.title('Phase Plane')
 plt.grid()
-plt.colorbar(label='Magnitude')
+ncx, ncy = plot_nc([K, r, b, h, a, d, sigma, 0, 0])
+plt.ylim(0, max(ncy)+20)
 plt.show()

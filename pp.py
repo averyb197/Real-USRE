@@ -30,6 +30,7 @@ def pp01(interval, targs, dh=1e-3):
         Y[m+1] = Y[m] + dh * dydt(X[m], Y[m])
 
     return t, X, Y
+
 def stability_analysis(x, y, K=44, r=.12, b=.12, h=.99, d=.315, a=.66, sigma=.53):
     eq1 = (0, 0)
     eq2 = (a, 0)
@@ -73,9 +74,9 @@ def stability_analysis(x, y, K=44, r=.12, b=.12, h=.99, d=.315, a=.66, sigma=.53
 @njit
 def make_params(opt):
     # Fixed parameters
-    K = 100
+    K = 75
     r = 1
-    a = 10
+    a = 20
     b = 0.5
     h = 0.3
 
@@ -92,28 +93,21 @@ def make_params(opt):
     # a<q<K
     if opt ==3:
         while True:
-            # Generate random parameters
-            K = random.uniform(50, 200)  # Example range for K
+           # K = random.uniform(50, 200)  # Example range for K
+
             r = random.uniform(0.5, 5)  # Example range for r
-            a = random.uniform(5, 20)  # Example range for a
+           # a = random.uniform(5, 20)  # Example range for a
             b = random.uniform(0.1, 10)  # Example range for b
             h = random.uniform(0.1, 5)  # Example range for h
 
-            # Compute derived parameters
-            d = a * b * (1 + h)  # Compute d based on the given formula
-            sigma = (d * h) + random.uniform(1, 10)  # Ensure sigma > d * h
+            d = a * b * (1 + h)
+            sigma = (d * h) + random.uniform(1, 10)
 
-            # Compute q
             q = d / (b * (sigma - d * h))
 
-            # Check the condition a < q < K
             if a < q < K and q>=30:
                 return [K, r, b, h, a, d, sigma]
 
-
-
-
-    # Return the parameter set
     return [K, r, b, h, a, d, sigma]
 
 def plot_nc(targs):
@@ -122,8 +116,20 @@ def plot_nc(targs):
 
     x = np.linspace(0, K)
     y = (r/b) * (x-a) * (1 - x/K)
-    plt.plot(x, y, c="white")
-    plt.axvline(q, 0,100, c="white")
+    eq1 = (0, 0)
+    eq2 = (a, 0)
+    eq3 = (K, 0)
+
+    eq4y = (r / (b * K)) * (q - a) * (K - q)
+    eq4 = (q, eq4y)
+    eqx, eqy = zip(eq1, eq2, eq3, eq4)
+    plt.scatter(eqx, eqy, s=20, c="red")
+
+    plt.plot(x, y, c="white", zorder=1)
+    plt.axvline(q, 0,100, c="white", zorder=1)
+    plt.scatter(eqx, eqy, s=20, c="red", zorder=2)
+
+    return (x, y)
 
 def plot_pp01(targs):
     X0 = 70.0
@@ -136,13 +142,13 @@ def plot_pp01(targs):
 
     q = d / (b * (sigma - d * h))
 
-    eq1 = (0, 0)
-    eq2 = (a, 0)
-    eq3 = (K, 0)
-
-    eq4y = (r/(b*K)) * (q - a) * (K - q)
-    eq4 = (q, eq4y)
-    eqx, eqy = zip(eq1, eq2, eq3, eq4)
+    # eq1 = (0, 0)
+    # eq2 = (a, 0)
+    # eq3 = (K, 0)
+    #
+    # eq4y = (r/(b*K)) * (q - a) * (K - q)
+    # eq4 = (q, eq4y)
+    # eqx, eqy = zip(eq1, eq2, eq3, eq4)
 
    # targs = [K, r, b, h, a, h, sigma, X0, Y0]
 
@@ -172,7 +178,7 @@ def plot_pp01(targs):
 
     num_intr = 50
     poix = np.linspace(q-0.02, q+0.02, num_intr)
-    poiy = np.linspace(eq4y-.1, eq4y+.1, num_intr)
+  #  poiy = np.linspace(eq4y-.1, eq4y+.1, num_intr)
 
     for k in range(len(poix)):
         targs[-2] = poix[k]

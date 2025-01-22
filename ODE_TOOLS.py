@@ -59,9 +59,8 @@ def FDMdir(f, t0, tn, y0, yn, a=1, b=0, c=0, h=1e-1): # dirichilet boundary cond
     #     print(np.ones(n-1))
     v = f(t[1:n]) * 2 * h ** 2  # value vector, with value for each value of t in discretized time array
 
-    v[0] = - subd * y0 + f(t[0]) * h ** 2  # (y0 * (c - (2*a/h**2)))
-    v[-1] = - supd * yn + f(t[-1]) * h ** 2  # (yn * (c - (2*a/h**2)))
-    #     v[1:-1] = f(t[1:n-1]) * h**2
+    v[0] = - subd * y0 + f(t[0]) * h ** 2
+    v[-1] = - supd * yn + f(t[-1]) * h ** 2
 
     print(np.shape(v))
 
@@ -79,9 +78,6 @@ def const(n):
         return np.full(t.shape, n)
     return rc
 
-# fest = np.linspace(0, 10, 10)
-# feff = const(1)
-# print(feff(fest))
 
 #@njit
 def FDMvn(f, t0, tn, yp0, ypn, a=const(1), b=const(0), c=const(0), h=1e-1):
