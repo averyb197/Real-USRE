@@ -4,8 +4,11 @@ from ODE_TOOLS import make_VF
 from numba import njit
 import astyle
 import matplotlib.animation as animation
+import random
 from matplotlib.collections import LineCollection
 astyle.make_pretty()
+
+
 @njit
 def pp01(interval, targs, dh=1e-3):
     n = int(interval/dh)
@@ -14,24 +17,10 @@ def pp01(interval, targs, dh=1e-3):
     X = np.empty(n)
     Y = np.empty(n)
 
-    # X0 = 10
-    # Y0 = 13
-
     K, r, b, h, a, d, sigma, X0, Y0 = targs
 
     X[0] = X0
     Y[0] = Y0
-
-    # K = 20 # carrying capacity of population
-    # r = .2  # growing rate of prey pop
-    # b = .001#searching rate
-    # h = .5 # h = handling time
-    # a = 2 #Allee param - benefit of increased population, kinda like how much given species needs to cooperate, life expectancy is often low when population is low even with
-    # #plenty of resources
-    # d = .05 # mortality for y
-    # sigma = .02 # rate at which surplus prey is converted into predator pop
-
-
 
     dxdt = lambda x, y: (r * x * (x - a) * (1 - (x/K))) - (b * x * y)
     dydt = lambda x, y: ((sigma * b * x * y)/(1 + (b * h * x))) - (d * y)
@@ -73,8 +62,6 @@ def stability_analysis(x, y, K=44, r=.12, b=.12, h=.99, d=.315, a=.66, sigma=.53
     for point in eq_points:
         l1, l2 = np.linalg.eig(Jacobian(point[0], point[1]))[0]
 
-
-
         print(type(l1), type(l2), "\n")
 
         typo = -1
@@ -82,6 +69,52 @@ def stability_analysis(x, y, K=44, r=.12, b=.12, h=.99, d=.315, a=.66, sigma=.53
         print(f" Point ({point[0]:.3f}, {point[1]:.3f}):\n"
               f" -- Eigen Values: ({l1:.3f}, {l2:.3f})\n"
               f" -- Type: {typo}")
+
+@njit
+def make_params(opt):
+    # Fixed parameters
+    K = 100
+    r = 1
+    a = 10
+    b = 0.5
+    h = 0.3
+
+    #q<a
+    if opt == 1:
+        # Compute `d` and `sigma` to satisfy the conditions
+        d = a * b * (1 + h)  # Rearranging q = d / (b * (sigma - d * h)) with sigma > d * h
+        sigma = (d * h) + 1.0  # Ensure sigma != d * h
+    #q==a
+    if opt == 2:
+        q = d / (b * (sigma - d * h))
+        a = q
+
+    # a<q<K
+    if opt ==3:
+        while True:
+            # Generate random parameters
+            K = random.uniform(50, 200)  # Example range for K
+            r = random.uniform(0.5, 5)  # Example range for r
+            a = random.uniform(5, 20)  # Example range for a
+            b = random.uniform(0.1, 10)  # Example range for b
+            h = random.uniform(0.1, 5)  # Example range for h
+
+            # Compute derived parameters
+            d = a * b * (1 + h)  # Compute d based on the given formula
+            sigma = (d * h) + random.uniform(1, 10)  # Ensure sigma > d * h
+
+            # Compute q
+            q = d / (b * (sigma - d * h))
+
+            # Check the condition a < q < K
+            if a < q < K and q>=30:
+                return [K, r, b, h, a, d, sigma]
+
+
+
+
+    # Return the parameter set
+    return [K, r, b, h, a, d, sigma]
 
 def plot_nc(targs):
     K, r, b, h, a, d, sigma = targs[:-2]
@@ -92,44 +125,16 @@ def plot_nc(targs):
     plt.plot(x, y, c="white")
     plt.axvline(q, 0,100, c="white")
 
-def plot_pp01(rand=False):
-    X0 = 95.0#q
-    Y0 = 20.0 #eq4y
+def plot_pp01(targs):
+    X0 = 70.0
+    Y0 = 30.0 #eq4y
 
-    if rand:
-        while True:
-            K = float(np.random.randint(1, 50))
-            r = np.random.rand()
-            b = np.random.rand()
-            h = np.random.rand()
-            a = np.random.rand()
-            d = np.random.rand()
-            sigma = np.random.rand()
+    K, r, b, h, a, d, sigma = targs
 
-            q = d/(b * (sigma - d*h))
+    targs.append(X0)
+    targs.append(Y0)
 
-            if q>0 and a<q and q<K:
-              #  targs = [K, r, b, h, a, h, sigma, X0, Y0]
-                print(f"K = {K}\n"
-                      f"r = {r}\n"
-                      f"b = {b}\n"
-                      f"h = {h}\n"
-                      f"a = {a}\n"
-                      f"d = {d}\n"
-                      f"sigma = {sigma}")
-                break
-
-    else:
-        K = 38.0
-        r = 0.8360346534665105
-        b = 0.06042445758166415
-        h = 0.5034374369716825
-        a = 0.17891038414771132
-        d = 0.23463094578034538
-        sigma = 0.8708806437827094
-        q = d / (b * (sigma - d * h))
-
-    targs = [K, r, b, h, a, d, sigma, X0, Y0]
+    q = d / (b * (sigma - d * h))
 
     eq1 = (0, 0)
     eq2 = (a, 0)
@@ -147,7 +152,7 @@ def plot_pp01(rand=False):
 
     stability_analysis(X0, Y0, K=K, r=r, b=b, h=h, sigma=sigma, a=a, d=d)
 
-    fig, ax = plt.subplots(2, figsize=(10, 8))
+    fig, ax = plt.subplots(2, figsize=(8, 8))
     interval=70
     t, X, Y = pp01(interval, targs)
     print(X)
@@ -165,7 +170,7 @@ def plot_pp01(rand=False):
             plt.scatter(xran[k], yran[j], c="red", s=1)
             plt.plot(X, Y)
 
-    num_intr = 10
+    num_intr = 50
     poix = np.linspace(q-0.02, q+0.02, num_intr)
     poiy = np.linspace(eq4y-.1, eq4y+.1, num_intr)
 
@@ -177,38 +182,46 @@ def plot_pp01(rand=False):
             plt.scatter(poix[k], poiy[j], c="red", s=1)
             plt.plot(X, Y)
 
-
     plot_nc(targs)
-
 
     ax[0].plot(t, X, c="#FF00FF")
     ax[0].plot(t, Y, c="#41FEFF")
     ax[0].legend(["X", "Y"])
     ax[1].scatter(eqx, eqy, s=20, c="red")
+    ax[1].set_xlim(0, 100)
+    ax[1].set_ylim(0, 100)
 
     plt.show()
 
-plot_pp01()
-
-def make_params(n=10, kmax=30, rmax=5, bmax=1, hmax=1, dmax=1, amax=30, sigmamax=1, epsilon=1e-3):
-    K = np.linspace(1, kmax, n)
-    r = np.linspace(epsilon, rmax, n)
-    b = np.linspace(epsilon, bmax, n)
-    h = np.linspace(epsilon, hmax, n)
-    d = np.linspace(epsilon, dmax, n)
-    a = np.linspace(epsilon, amax, n)
-    sigma = np.linspace(epsilon, sigmamax, n)
+#paras = make_params(3)
 
 
-    q = d/(b * (sigma - d*h))
+def print_params(params):
 
-    valid_params = []
+    # Unpack parameters
+    K, r, b, h, a, d, sigma = params
 
-    for i in range(n):
-        if q[i] > 0 and (a[i]<q[i]<K[i]):
-            valid_params.append(np.array([K, r, b, h, d, a, sigma, q]))
+    # Compute q
+    q = d / (b * (sigma - d * h))
 
-    print(valid_params)
+    # Print the parameters
+    print("Parameters:")
+    print(f"  K      = {K}")
+    print(f"  r      = {r}")
+    print(f"  b      = {b}")
+    print(f"  h      = {h}")
+    print(f"  a      = {a}")
+    print(f"  d      = {d:.4f}")
+    print(f"  sigma  = {sigma:.4f}")
+
+    # Print the computed value of q
+    print(f"\nComputed value:")
+    print(f"  q      = {q:.4f}")
+
+# print_params(paras)
+# plot_pp01(paras)
+
+
 
 def ani_henson():
     fig, ax = plt.subplots(figsize=(8, 6))
@@ -288,7 +301,6 @@ def ani_henson():
     return ani
 
 
-#stability_analysis(0, 0)
 
 
 

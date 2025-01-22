@@ -72,14 +72,6 @@ def FDMdir(f, t0, tn, y0, yn, a=1, b=0, c=0, h=1e-1): # dirichilet boundary cond
     return t, y
 
 
-# y_left = 0
-# y_right = 5
-# tt, yy = FDMdir(lambda t: t**-2, 1, 10, y_left, y_right)
-#
-# plt.plot(tt, yy)
-# plt.show()
-
-
 def const(n):
     def rc(t):
         if type(t) != np.ndarray:
@@ -122,23 +114,13 @@ def FDMvn(f, t0, tn, yp0, ypn, a=const(1), b=const(0), c=const(0), h=1e-1):
     print()
     print(v)
     print()
-
     y = np.linalg.solve(A, v)
-
-
     return t, y
 
 def tau(t):
     return t
 
-# tt, yy = FDMvn(tau, 0, 1, 0, 0, a=const(1), b=const(1), c=const(-1), h=1e-2)
-#
-# print("IM WORKING")
-# print(tt, yy)
-#
-# fig, myp = plt.subplots(1)
-# myp.plot(tt, yy)
-# plt.show()
+
 
 
 
